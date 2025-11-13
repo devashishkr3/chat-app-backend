@@ -1,11 +1,18 @@
 import User from "../models/user.model.js";
 import bcrypt from "bcryptjs";
+import { generateToken } from "../lib/utils.js";
 
 
 export const signup = async (req, res) =>{
     try {
         const {email, fullName , password} = req.body;
 
+        if(!fullName || !email || !password){
+            return res.status(400).json({
+                success : false,
+                message : "All Fields are required",
+            })
+        }
         if(password.length < 6){
             return res.status(400).json({
                 success : false,
@@ -32,7 +39,16 @@ export const signup = async (req, res) =>{
         })
 
         if(newUser){
-            //jwt
+            generateToken(newUser._id, res);
+            await newUser.save();
+
+            return res.status(201).json({
+                _id: newUser._id,
+                fullName: newUser.fullName,
+                email: newUser.email,
+                profilePic: newUser.profilePic,
+            })
+
         }else{
             res.status(400).json({
                 success : false,
@@ -41,12 +57,52 @@ export const signup = async (req, res) =>{
         }
 
     } catch (error) {
-        
+        console.log("Signup Error", error.message);
+        return res.status(500).json({
+            success: false,
+            message: "Internal Server Error",
+        }) 
     }
 }
 
-export const login = () =>{
-resizeBy.send("Login");
+export const login = async (req, res) =>{
+    const {email, password} = req.body;
+    try {
+        if(!email || !password){
+            return res.status(400).json({
+                success: false,
+                message : "All fields are required",
+            })
+        }
+        const existUser = await User.findOne({email});
+        if(!existUser){
+            return res.status(404).json({
+                success: false,
+                message: "No user Found with this email",
+            })
+        }
+
+        const isPassword = bcrypt.compare(existUser.password, password);
+
+        if(!isPassword){
+            return res.status(401).json({
+                success: false,
+                message: "Password mismatched",
+            })
+        }
+
+        return res.status(200).json({
+            success: true,
+            
+        })
+
+    } catch (error) {
+        console.log("Login Error", error.message);
+        return res.status(500).json({
+            success: false,
+            message : "Internal Server Error"
+        })
+    }
 }
 
 export const logout = () =>{
