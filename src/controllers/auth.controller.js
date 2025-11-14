@@ -76,9 +76,9 @@ export const login = async (req, res) =>{
         }
         const existUser = await User.findOne({email});
         if(!existUser){
-            return res.status(404).json({
+            return res.status(400).json({
                 success: false,
-                message: "No user Found with this email",
+                message: "Invalid C redentials ",
             })
         }
 
@@ -87,13 +87,18 @@ export const login = async (req, res) =>{
         if(!isPassword){
             return res.status(401).json({
                 success: false,
-                message: "Password mismatched",
+                message: "Invalid Credentials",
             })
         }
 
+        generateToken(existUser._id, res)
+
         return res.status(200).json({
             success: true,
-            
+            _id : existUser._id,
+            fullName: existUser.fullName,
+            email: existUser.email,
+            profilePic: existUser.profilePic
         })
 
     } catch (error) {
@@ -105,6 +110,23 @@ export const login = async (req, res) =>{
     }
 }
 
-export const logout = () =>{
-resizeBy.send("Logout");
+export const logout = async(req, res) =>{
+    try {
+        res.cookie("jwt", "", {maxAge: 0});
+        res.status(200).json({success: true, message : "Logout Successfully"});
+    } catch (error) {
+        console.log("Error : ", error.message);
+        return res.status(500).json({
+            success : false,
+            message : "Internal Server Error",
+        })
+    }
+}
+
+export const updateProfile = async(req, res) =>{
+    try {
+        
+    } catch (error) {
+        
+    }
 }
